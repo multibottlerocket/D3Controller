@@ -252,15 +252,14 @@ setButtonStates() { ;dPadUp, dPadDown, dPadLeft, dPadRight
 				;, buttonB, buttonX, buttonY) {
 	global
 
-	if leftTrigger { ;put Ctrl first so that modifiers happen correctly
+	if back { ;put Ctrl first so that modifiers happen correctly
 		Send {CTRL down}
 		CTRLDn := true
 	}
-	if (!leftTrigger & CTRLDn) {
+	if (!back & CTRLDn) {
 		Send {CTRL up}
 		CTRLDn := false
 	} 
-
 	if buttonA {
 		Send {r down}
 		rDown := true
@@ -270,19 +269,23 @@ setButtonStates() { ;dPadUp, dPadDown, dPadLeft, dPadRight
 		rDown:= false
 	}
 	if buttonX {
-		Send, w
+		Send {d down}
+		dDown := true
 	} 
-	if buttonY {
-		Send, e
-	} 
+	if (!buttonX & dDown) {
+		Send {d up}
+		dDown := false
+	}
+	;if buttonY {
+	;	Send, e
+	;} 
 	if buttonB {
-		Send {a down}
-		MouseClick, left, centerX, centerY, ,0
-		aDown := true
+		Send {f down}
+		fDown := true
 	} 
-	if (!buttonB & aDown) {
-		Send {a up}
-		aDown := false
+	if (!buttonB & fDown) {
+		Send {f up}
+		fDown := false
 	}
 	if rightShoulder {
 		Send {w down}
@@ -308,10 +311,19 @@ setButtonStates() { ;dPadUp, dPadDown, dPadLeft, dPadRight
 		Send {q up}
 		qDown := false
 	}
-	if dPadRight { ;town portal
-		Send, t
-		Sleep, 50
+	if leftTrigger { ;attack-move on top of self for last-hitting
+		Send {a down}
+		MouseClick, left, centerX, centerY, ,0
+		aDown := true
+	}
+	if (!leftTrigger & aDown) {
+		Send {a up}
+		aDown := false
 	} 
+	;if dPadRight { ;town portal
+	;	Send, t
+	;	Sleep, 50
+	;} 
 	if dPadDown {
 		Send {b down}
 		bDown := true
@@ -320,39 +332,39 @@ setButtonStates() { ;dPadUp, dPadDown, dPadLeft, dPadRight
 		Send {b up}
 		bDown := false
 	}
-	if dPadLeft {
-		Send {a down}
-		MouseClick, left, centerX, centerY, ,0
-		aDown := true
-	} 
-	if (!dPadLeft & aDown) {
-		Send {a up}
-		aDown := false
-	}
-	if dPadUp {
-		Send {f down}
-		fDown := true
-	}
-	if (!dPadUp & fDown) {
-		Send {f up}
-		fDown := false
-	}
-	if rightThumb {
-		Send {a down}
-		MouseClick, left, centerX, centerY, ,0
-		aDown := true
-	} 
-	if (!rightThumb & aDown) {
-		Send {a up}
-		aDown := false
-	}
-	if back { ;character menu
-		Send, c
-		Sleep, 50
-	}
+	;if dPadLeft {
+	;	Send {a down}
+	;	MouseClick, left, centerX, centerY, ,0
+	;	aDown := true
+	;} 
+	;if (!dPadLeft & aDown) {
+	;	Send {a up}
+	;	aDown := false
+	;}
+	;if dPadUp {
+	;	Send {b down}
+	;	bDown := true
+	;}
+	;if (!dPadUp & bDown) {
+	;	Send {b up}
+	;	bDown := false
+	;}
+	;if rightThumb {
+	;	Send {a down}
+	;	MouseClick, left, centerX, centerY, ,0
+	;	aDown := true
+	;} 
+	;if (!rightThumb & aDown) {
+	;	Send {a up}
+	;	aDown := false
+	;}
 	if start { ;game menu
-		Send {Esc}
-		Sleep, 50
+		Send {s down}
+		sDown := true
+	}
+	if (!start & sDown) {
+		Send {s up}
+		sDown := false
 	}
 }
 
