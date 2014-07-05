@@ -14,7 +14,7 @@ moveUpdatecount = 0
 resolutionX = 1920
 resolutionY = 1080
 centerX := resolutionX/2
-centerY := resolutionY/2 - 40
+centerY := resolutionY/2 - 20
 analogMax = 32767 ;max value analog sticks can return
 analogMin = -32768 ;min value analog sticks can return
 triggerMax = 255 ;max value trigger can return
@@ -303,34 +303,36 @@ setButtonStates() { ;dPadUp, dPadDown, dPadLeft, dPadRight
 		Send {e up}
 		eDown := false
 	}
-	if leftShoulder {
-		Send {q down}
-		qDown := true
-	} 
-	if (!leftShoulder & qDown) {
-		Send {q up}
-		qDown := false
-	}
-	if leftTrigger { ;attack-move on top of self for last-hitting
+	if leftShoulder { ;attack-move on top of self for last-hitting
 		Send {a down}
 		MouseClick, left, centerX, centerY, ,0
 		aDown := true
 	}
-	if (!leftTrigger & aDown) {
+	if (!leftShoulder & aDown) {
 		Send {a up}
 		aDown := false
 	} 
+	if leftTrigger {
+		Send {q down}
+		qDown := true
+	} 
+	if (!leftTrigger & qDown) {
+		Send {q up}
+		qDown := false
+	}
 	;if dPadRight { ;town portal
 	;	Send, t
 	;	Sleep, 50
 	;} 
 	if dPadDown {
-		Send {b down}
-		bDown := true
+		Send {s down}
+		sDown := true
+
 	}
-	if (!dPadDown & bDown) {
-		Send {b up}
-		bDown := false
+	if (!dPadDown & sDown) {
+		Send {s up}
+		sDown := false
+
 	}
 	;if dPadLeft {
 	;	Send {a down}
@@ -359,12 +361,12 @@ setButtonStates() { ;dPadUp, dPadDown, dPadLeft, dPadRight
 	;	aDown := false
 	;}
 	if start { ;game menu
-		Send {s down}
-		sDown := true
+		Send {b down}
+		bDown := true
 	}
-	if (!start & sDown) {
-		Send {s up}
-		sDown := false
+	if (!start & bDown) {
+		Send {b up}
+		bDown := false
 	}
 }
 
@@ -379,8 +381,8 @@ Visible := True      ;<= determine start-up behaviour
 ; use VirtualScreen here to support multiple monitors
 SysGet, VirtualScreenWidth, 78
 SysGet, VirtualScreenHeight, 79
-ID1 := Box(2,1,30)
-;ID2 := Box(3,30,1)
+ID1 := Box(2,2,30)
+ID2 := Box(3,30,2)
 
 ;SetTimer Ruler, 10
 if (Visible == False) {
@@ -438,7 +440,7 @@ ExitApp
 ; === Subroutines
 Ruler:
    WinMove ahk_id %ID1%,, %crosshairPosX%, % crosshairPosY-15    ;create crosshair by moving 1/2 length of segment
-;   WinMove ahk_id %ID2%,, % crosshairPosX-15, %crosshairPosY%
+   WinMove ahk_id %ID2%,, % crosshairPosX-15, %crosshairPosY%
    ;ToolTip (Ctrl-0 to anchor)
 Return 
 
