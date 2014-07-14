@@ -20,7 +20,8 @@ analogMin = -32768 ;min value analog sticks can return
 triggerMax = 255 ;max value trigger can return
 triggerMin = 0 ;min value trigger can return
 moveCircleRadius = 200
-aimCircleRadius = 300
+aimCircleRadius = 400
+aimingDirection := "inward"
 
 ;for bit-mapping to buttons, see:
 ;http://msdn.microsoft.com/en-us/library/microsoft.directx_sdk.reference.xinput_gamepad(v=vs.85).aspx
@@ -41,11 +42,21 @@ buttonYMask			:= 2**15
 
 #q::stop++ ;flag to kill loop
 
-#s::
-mask = 128
-var2 = 24+2048
-start := (mask & var2 == mask)
-DebugMessage(start)
+#s::Reload
+;mask = 128
+;var2 = 24+2048
+;start := (mask & var2 == mask)
+;DebugMessage(start)
+return
+
+#c::
+if (aimingDirection == "inward") {
+	aimingDirection := "outward"
+}
+else {
+	aimingDirection := "inward"
+}
+aimCircleRadius := 480 - aimCircleRadius
 return
 
 #w::
@@ -86,26 +97,25 @@ return
 aiming:
 	;get button states from wButtons status word
 	getButtonStates(wButtons) 
-	;turn analog trigger signals into binary buttons for now
-	thresholdTriggers(leftTriggerAnalog, rightTriggerAnalog)
-		;DebugMessage(rightTrigger)
-		;Sleep, 100
+	processTriggers(leftTriggerAnalog, rightTriggerAnalog)
 	;handle ability aiming via left analog stick (since ability buttons are on the right)
-;	analogStick2Offsets(thumbLX, thumbLY ;inputs
-;						, offsetLX, offsetLY) ;outputs
-	thresholdedAnalogStick2Offsets(thumbLX, thumbLY ;inputs
+	thresholdedAnalogStick2Offsets(aimCircleRadius, thumbLX, thumbLY ;inputs
 								 , offsetLX, offsetLY) ;outputs
 	if((Abs(offsetLX)+Abs(offsetLY)) > 0) { ;only click for significant displacements
-		;MouseMove, centerX+offsetLX, centerY+offsetLY, 0
-		crosshairPosX := centerX+offsetLX
-		crosshairPosY := centerY+offsetLY
+		if (aimingDirection == "inward") {
+			crosshairPosX := centerX+(offsetLX*leftTriggerAnalogTrim)
+			crosshairPosY := centerY+(offsetLY*leftTriggerAnalogTrim)
+		}
+		else {
+			crosshairPosX := centerX+(offsetLX/leftTriggerAnalogTrim)
+			crosshairPosY := centerY+(offsetLY/leftTriggerAnalogTrim)
+		}
 	}
 	else {
 		crosshairPosX := autoMoveX
 		crosshairPosY := autoMoveY
 	}
-		;DebugMessage(offsetLX)
-	if((wButtons > 0) OR rightTrigger OR leftTrigger) { ;if any buttons are pressed
+	if((wButtons > 0) OR rightTrigger) { ;if any buttons are pressed
 		MouseGetPos, currentX, currentY
 		if ((currentX != crosshairPosX) OR (currentY != crosshairPosY)) {
 			;DebugMessage("moving mouse")
@@ -122,10 +132,10 @@ return
 
 movement:
 	;handle character movement via right analog stick
-	thresholdedAnalogStick2Offsets(thumbRX, thumbRY ;inputs
+	thresholdedAnalogStick2Offsets(moveCircleRadius, thumbRX, thumbRY ;inputs
 						, offsetRX, offsetRY) ;outputs
 		;DebugMessage(offsetRX)
-	if (moveUpdateCount > 10) {
+	if (moveUpdateCount > 1) {
 		if(((Abs(offsetRX)+Abs(offsetRY)) > 0) & movementAllowed) { ;only click for significant displacements and when we're not locked out by something else
 				;DebugMessage(offsetRX)
 				;DebugMessage(offsetRY)
@@ -178,9 +188,8 @@ analogStick2Offsets(analogX, analogY ;inputs
 ;this function takes in the analog X and Y values from a joystick
 ;and returns by reference the appropriate pixel offsets from the center for
 ;the mouse to click
-thresholdedAnalogStick2Offsets(analogX, analogY ;inputs
+thresholdedAnalogStick2Offsets(circleRadius, analogX, analogY ;inputs
 					, byRef offsetX, byRef offsetY) { ;outputs
-	global moveCircleRadius
 	global analogMax
 	if (analogX > 0) { ;first or fourth quadrant
 		angle := ATan(analogY/analogX)
@@ -193,15 +202,51 @@ thresholdedAnalogStick2Offsets(analogX, analogY ;inputs
 		;DebugMessage(radius)
 	if (radius > analogMax/4) { ;only click for significant displacements
 			;DebugMessage(angle)
-			;DebugMessage(moveCircleRadius)
-		offsetX := moveCircleRadius*Cos(angle)
-		offsetY := -moveCircleRadius*Sin(angle) ;Y direction is reversed since pixels count downward from top
+		offsetX := circleRadius*Cos(angle)
+		offsetY := -circleRadius*Sin(angle) ;Y direction is reversed since pixels count downward from top
 			;DebugMessage(offsetX)
 			;DebugMessage(offsetY)
 	}
 	else {
 		offsetX := 0
 		offsetY := 0
+	}
+}
+
+;take in analog values of triggers and just threshold to make them buttons
+thresholdTriggers(leftTriggerAnalog, rightTriggerAnalog) {
+	global
+	if (leftTriggerAnalog > triggerMax/4) {
+		leftTrigger := 1
+	}
+	else {
+		leftTrigger := 0
+	}
+	if (rightTriggerAnalog > triggerMax/4) {
+		rightTrigger := 1
+	}
+	else {
+		rightTrigger := 0
+	}
+}
+
+;take in analog values of triggers, turn right trigger into a button, and turn left trigger into a trimmed analog value
+processTriggers(leftTriggerAnalog, rightTriggerAnalog) {
+	global
+	if (leftTriggerAnalog < triggerMax/20) { ;not pressing trigger: full range
+		leftTriggerAnalogTrim := 1
+	}
+	else if ((leftTriggerAnalog >= triggerMax/20) &(leftTriggerAnalog < triggerMax*19/20)) {
+		leftTriggerAnalogTrim := 1 - 0.8*(leftTriggerAnalog - triggerMax/20)/(triggerMax*18/20) 
+	}
+	else {
+		leftTriggerAnalogTrim := 0.2
+	}
+	if (rightTriggerAnalog > triggerMax/4) {
+		rightTrigger := 1
+	}
+	else {
+		rightTrigger := 0
 	}
 }
 
@@ -226,23 +271,6 @@ getButtonStates(wButtons) { ;, byRef dPadUp, byRef dPadDown, byRef dPadLeft, byR
 	buttonB 		:= (buttonBMask & wButtons == buttonBMask)
 	buttonX 		:= (buttonXMask & wButtons == buttonXMask)
 	buttonY 		:= (buttonYMask & wButtons == buttonYMask)
-}
-
-;take in analog values of triggers and just threshold to make them buttons
-thresholdTriggers(leftTriggerAnalog, rightTriggerAnalog) {
-	global
-	if (leftTriggerAnalog > triggerMax/4) {
-		leftTrigger := 1
-	}
-	else {
-		leftTrigger := 0
-	}
-	if (rightTriggerAnalog > triggerMax/4) {
-		rightTrigger := 1
-	}
-	else {
-		rightTrigger := 0
-	}
 }
 
 ;map controller button states to key states (released/depressed)
@@ -304,22 +332,21 @@ setButtonStates() { ;dPadUp, dPadDown, dPadLeft, dPadRight
 		eDown := false
 	}
 	if leftShoulder { ;attack-move on top of self for last-hitting
-		Send {a down}
-		MouseClick, left, centerX, centerY, ,0
-		aDown := true
-	}
-	if (!leftShoulder & aDown) {
-		Send {a up}
-		aDown := false
-	} 
-	if leftTrigger {
 		Send {q down}
 		qDown := true
-	} 
-	if (!leftTrigger & qDown) {
+	}
+	if (!leftShoulder & qDown) {
 		Send {q up}
 		qDown := false
-	}
+	} 
+	;if leftTrigger {
+	;	Send {q down}
+	;	qDown := true
+	;} 
+	;if (!leftTrigger & qDown) {
+	;	Send {q up}
+	;	qDown := false
+	;}
 	;if dPadRight { ;town portal
 	;	Send, t
 	;	Sleep, 50
@@ -334,15 +361,15 @@ setButtonStates() { ;dPadUp, dPadDown, dPadLeft, dPadRight
 		sDown := false
 
 	}
-	;if dPadLeft {
-	;	Send {a down}
-	;	MouseClick, left, centerX, centerY, ,0
-	;	aDown := true
-	;} 
-	;if (!dPadLeft & aDown) {
-	;	Send {a up}
-	;	aDown := false
-	;}
+	if dPadLeft {
+		Send {a down}
+		MouseClick, left, centerX, centerY, ,0
+		aDown := true
+	} 
+	if (!dPadLeft & aDown) {
+		Send {a up}
+		aDown := false
+	}
 	;if dPadUp {
 	;	Send {b down}
 	;	bDown := true
