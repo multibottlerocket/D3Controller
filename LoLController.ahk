@@ -304,9 +304,14 @@ setButtonStates() { ;dPadUp, dPadDown, dPadLeft, dPadRight
 		Send {d up}
 		dDown := false
 	}
-	;if buttonY {
-	;	Send, e
-	;} 
+	if buttonY {
+		Send {1 down}
+		oneDown := true
+	} 
+	if (!buttonY & oneDown) {
+		Send {1 up}
+		oneDown := false
+	}
 	if buttonB {
 		Send {f down}
 		fDown := true
