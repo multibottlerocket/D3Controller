@@ -112,8 +112,14 @@ aiming:
 		}
 	}
 	else {
-		crosshairPosX := autoMoveX
-		crosshairPosY := autoMoveY
+		if (aimingDirection == "inward") {
+			crosshairPosX := centerX+(offsetRX*leftTriggerAnalogTrim)*aimCircleRadius/moveCircleRadius
+			crosshairPosY := centerY+(offsetRY*leftTriggerAnalogTrim)*aimCircleRadius/moveCircleRadius
+		}
+		else {
+			crosshairPosX := centerX+(offsetRX/leftTriggerAnalogTrim)*aimCircleRadius/moveCircleRadius
+			crosshairPosY := centerY+(offsetRY/leftTriggerAnalogTrim)*aimCircleRadius/moveCircleRadius
+		}
 	}
 	if((wButtons > 0) OR rightTrigger) { ;if any buttons are pressed
 		MouseGetPos, currentX, currentY
