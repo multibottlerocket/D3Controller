@@ -23,6 +23,23 @@ moveCircleRadius = 200
 aimCircleRadius = 400
 aimingDirection := "inward"
 
+;shop variables
+shopUpperLeftX := 292 ;upper left corner of shop
+shopUpperLeftY := 72
+shopAllItemsOffsetX := 400 ;center of "All Items" button, relative to upper left corner of shop
+shopAllItemsOffsetY := 100
+shopItemGridOffsetX := 310 ;upper left corner of upper left item in item grid, relative to upper left corner of shop
+shopItemGridOffsetY := 210
+shopItemGridSpacingX := 79 ;spacing of the item blocks when diplayed in "grid" mode
+shopItemGridSpacingY := 95
+shopItemBoxX := 56 ; dimensions of item box
+shopItemBoxY := 74
+;dragging the scroll bar by one Y pixel moves the items by 4 Y pixels
+scrollBarOffsetX := 800 ;dead center of the scroll bar when it's at the topmost position
+scrollBarOffsetY := 300
+itemSelGridCoordX := 2
+itemSelGridCoordY := 3
+
 ;for bit-mapping to buttons, see:
 ;http://msdn.microsoft.com/en-us/library/microsoft.directx_sdk.reference.xinput_gamepad(v=vs.85).aspx
 dPadUpMask 			:= 2**0
@@ -47,6 +64,15 @@ buttonYMask			:= 2**15
 ;var2 = 24+2048
 ;start := (mask & var2 == mask)
 ;DebugMessage(start)
+return
+
+#v::
+Send, {p Down} ;open shop
+Sleep, 50
+Send, {p Up}
+Sleep, 300
+MouseClick, left, shopUpperLeftX+shopAllItemsOffsetX, shopUpperLeftY+shopAllItemsOffsetY ;go to "All Items" 
+MouseMove, shopUpperLeftX+shopItemGridOffsetX+(itemSelGridCoordX*shopItemGridSpacingX)+shopItemBoxX/2, shopUpperLeftY+shopItemGridOffsetY+(itemSelGridCoordY*shopItemGridSpacingY)+shopItemBoxY/2, 0
 return
 
 #c::
@@ -286,125 +312,128 @@ setButtonStates() { ;dPadUp, dPadDown, dPadLeft, dPadRight
 				;, buttonB, buttonX, buttonY) {
 	global
 
-	if back { ;put Ctrl first so that modifiers happen correctly
+	if (back & !backDown) { ;put Ctrl first so that modifiers happen correctly
 		Send {CTRL down}
-		CTRLDn := true
+		backDown := true
 	}
-	if (!back & CTRLDn) {
+	if (!back & backDown) {
 		Send {CTRL up}
-		CTRLDn := false
+		backDown := false
 	} 
-	if buttonA {
+	if (buttonA & !aDown) {
 		Send {r down}
-		rDown := true
-	} 
-	if (!buttonA & rDown) {
-		Send {r up}
-		rDown:= false
-	}
-	if buttonX {
-		Send {d down}
-		dDown := true
-	} 
-	if (!buttonX & dDown) {
-		Send {d up}
-		dDown := false
-	}
-	if buttonY {
-		Send {1 down}
-		oneDown := true
-	} 
-	if (!buttonY & oneDown) {
-		Send {1 up}
-		oneDown := false
-	}
-	if buttonB {
-		Send {f down}
-		fDown := true
-	} 
-	if (!buttonB & fDown) {
-		Send {f up}
-		fDown := false
-	}
-	if rightShoulder {
-		Send {w down}
-		wDown := true
-	}
-	if (!rightShoulder & wDown) {
-		Send {w up}
-		wDown := false
-	} 
-	if rightTrigger{
-		Send {e down}
-		eDown := true
-	}
-	if (!rightTrigger & eDown) {
-		Send {e up}
-		eDown := false
-	}
-	if leftShoulder { ;attack-move on top of self for last-hitting
-		Send {q down}
-		qDown := true
-	}
-	if (!leftShoulder & qDown) {
-		Send {q up}
-		qDown := false
-	} 
-	;if leftTrigger {
-	;	Send {q down}
-	;	qDown := true
-	;} 
-	;if (!leftTrigger & qDown) {
-	;	Send {q up}
-	;	qDown := false
-	;}
-	;if dPadRight { ;town portal
-	;	Send, t
-	;	Sleep, 50
-	;} 
-	if dPadDown {
-		Send {s down}
-		sDown := true
-
-	}
-	if (!dPadDown & sDown) {
-		Send {s up}
-		sDown := false
-
-	}
-	if dPadLeft {
-		Send {a down}
-		MouseClick, left, centerX, centerY, ,0
 		aDown := true
 	} 
-	if (!dPadLeft & aDown) {
-		Send {a up}
-		aDown := false
+	if (!buttonA & aDown) {
+		Send {r up}
+		aDown:= false
 	}
-	;if dPadUp {
+	if (buttonX & !xDown) {
+		Send {d down}
+		xDown := true
+	} 
+	if (!buttonX & xDown) {
+		Send {d up}
+		xDown := false
+	}
+	if (buttonY & !yDown) {
+		Send {1 down}
+		yDown := true
+	} 
+	if (!buttonY & yDown) {
+		Send {1 up}
+		yDown := false
+	}
+	if (buttonB & !bDown) {
+		Send {f down}
+		bDown := true
+	} 
+	if (!buttonB & bDown) {
+		Send {f up}
+		bDown := false
+	}
+	if (rightShoulder & !rShoulderDown){
+		Send {w down}
+		rShoulderDown := true
+	}
+	if (!rightShoulder & rShoulderDown) {
+		Send {w up}
+		rShoulderDown := false
+	} 
+	if (rightTrigger & !rTrigDown){
+		Send {e down}
+		rTrigDown := true
+	}
+	if (!rightTrigger & rTrigDown) {
+		Send {e up}
+		rTrigDown := false
+	}
+	if (leftShoulder & !lShoulderDown){ ;attack-move on top of self for last-hitting
+		Send {q down}
+		lShoulderDown := true
+	}
+	if (!leftShoulder & lShoulderDown) {
+		Send {q up}
+		lShoulderDown := false
+	} 
+	;if (leftTrigger & !lTrigDown){
+	;	Send {q down}
+	;	lTrigDown := true
+	;} 
+	;if (!leftTrigger & lTrigDown) {
+	;	Send {q up}
+	;	lTrigDownp := false
+	;}
+	if (dPadRight & !dPadRDown){ ; shop
+		Send, {p down}
+		dPadRDown := true
+		Sleep, 50
+	}
+	if (!dPadRight & dPadRDown) {
+		Send {p up}
+		dPadRDown := false
+	}
+	if (dPadDown & !dPadDDown){
+		Send {s down}
+		dPadDDown := true
+	}
+	if (!dPadDown & dPadDDown) {
+		Send {s up}
+		dPadDDown := false
+	}
+	if (dPadLeft & !dPadLDown){
+		Send {a down}
+		MouseClick, left, centerX, centerY, ,0
+		dPadLDown := true
+	} 
+	if (!dPadLeft & dPadLDown) {
+		Send {a up}
+		dPadLDown := false
+	}
+	;if (dPadUp & !dPadUDown){
 	;	Send {b down}
-	;	bDown := true
+	;	dPadUDown := true
 	;}
-	;if (!dPadUp & bDown) {
+	;if (!dPadUp & dPadUDown) {
 	;	Send {b up}
-	;	bDown := false
+	;	dPadUDown := false
 	;}
-	;if rightThumb {
+	;if (rightThumb & !rThumbDown){
 	;	Send {a down}
 	;	MouseClick, left, centerX, centerY, ,0
-	;	aDown := true
+	;	rThumbDown := true
 	;} 
-	;if (!rightThumb & aDown) {
+	;if (!rightThumb & rThumbDown) {
 	;	Send {a up}
-	;	aDown := false
+	;	rThumbDown := false
 	;}
-	if start { ;game menu
+	if (start & !startDown){ ;game menu
 		Send {b down}
-		bDown := true
+		startDown := true
 	}
-	if (!start & bDown) {
+	if (!start & startDown) {
 		Send {b up}
-		bDown := false
+		startDown := false
 	}
 }
 

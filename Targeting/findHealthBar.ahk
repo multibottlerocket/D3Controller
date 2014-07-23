@@ -41,7 +41,7 @@ Loop {
 	while searching {
 		;ImageSearch, healthX, healthY, trackingX-searchBoxSize, lastY, trackingX+searchBoxSize, trackingY+searchBoxSize, healthBarCorner.png ;this won't find multiple health bars on the same line
 		;PixelSearch, healthX, healthY, trackingX-searchBoxSize, lastY, trackingX+searchBoxSize, trackingY+searchBoxSize, 0x6B6DFF, , Fast
-		PixelSearch, healthX, healthY, lastX, lastY, screenX, screenY, 0x6B6DFF, , Fast
+		PixelSearch, healthX, healthY, lastX, lastY, screenX, screenY, 0x6868E6, , Fast
 		if (ErrorLevel == 1) {
 			;MsgBox, Couldnt find
 			searching := false
