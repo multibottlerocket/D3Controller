@@ -2,7 +2,11 @@
 #Include json.ahk
 #Include debugConsole.ahk
 #Include, Gdip.ahk
-;DebugMessage("foo")
+
+; Champs this works decently with: Ahri, Ashe, Blitzcrank (sorta), Corki (maybe), Ezreal, 
+; 	Gnar (maybe), Graves (sorta), Kennen, Renekton (sorta), Riven (maybe?), Rumble (the ult is weird), 
+;	Sejuani, Shyvana (sorta), Sion, Sivir, Sona (sorta), Vel'Koz (maybe), Zac
+
 XInput_Init()
 
 ;status variables and flags
@@ -13,15 +17,16 @@ moveUpdatecount = 0
 ;system parameters and derivatives
 resolutionX = 1920
 resolutionY = 1080
-centerX := resolutionX/2
+centerX := resolutionX/2 - 60 
 centerY := resolutionY/2 - 20
 analogMax = 32767 ;max value analog sticks can return
 analogMin = -32768 ;min value analog sticks can return
 triggerMax = 255 ;max value trigger can return
 triggerMin = 0 ;min value trigger can return
 moveCircleRadius = 200
-aimCircleRadius = 400
+aimCircleRadius = 420
 aimingDirection := "inward"
+side := "blue"
 
 ;shop variables
 shopUpperLeftX := 292 ;upper left corner of shop
@@ -67,12 +72,16 @@ buttonYMask			:= 2**15
 return
 
 #v::
-Send, {p Down} ;open shop
-Sleep, 50
-Send, {p Up}
-Sleep, 300
-MouseClick, left, shopUpperLeftX+shopAllItemsOffsetX, shopUpperLeftY+shopAllItemsOffsetY ;go to "All Items" 
-MouseMove, shopUpperLeftX+shopItemGridOffsetX+(itemSelGridCoordX*shopItemGridSpacingX)+shopItemBoxX/2, shopUpperLeftY+shopItemGridOffsetY+(itemSelGridCoordY*shopItemGridSpacingY)+shopItemBoxY/2, 0
+if (side == "blue") {
+	; switch to red
+	centerX := resolutionX/2 + 90 
+	centerY := resolutionX/2 - 540 
+	side := "red"
+} else { ; switch to blue
+	centerX := resolutionX/2 - 60 
+	centerY := resolutionY/2 - 20 
+	side := "blue"
+}
 return
 
 #c::
@@ -337,11 +346,11 @@ setButtonStates() { ;dPadUp, dPadDown, dPadLeft, dPadRight
 		xDown := false
 	}
 	if (buttonY & !yDown) {
-		Send {1 down}
+		Send {Tab down}
 		yDown := true
 	} 
 	if (!buttonY & yDown) {
-		Send {1 up}
+		Send {Tab up}
 		yDown := false
 	}
 	if (buttonB & !bDown) {
@@ -376,21 +385,20 @@ setButtonStates() { ;dPadUp, dPadDown, dPadLeft, dPadRight
 		Send {q up}
 		lShoulderDown := false
 	} 
-	;if (leftTrigger & !lTrigDown){
-	;	Send {q down}
-	;	lTrigDown := true
-	;} 
-	;if (!leftTrigger & lTrigDown) {
-	;	Send {q up}
-	;	lTrigDownp := false
-	;}
+	; if (leftTrigger & !lTrigDown){ ; currently being used for stretchy cursor
+	; 	Send {1 down}
+	; 	lTrigDown := true
+	; } 
+	; if (!leftTrigger & lTrigDown) {
+	; 	Send {1 up}
+	; 	lTrigDownp := false
+	; }
 	if (dPadRight & !dPadRDown){ ; shop
-		Send, {p down}
+		Send {t down}
 		dPadRDown := true
-		Sleep, 50
 	}
 	if (!dPadRight & dPadRDown) {
-		Send {p up}
+		Send {t up}
 		dPadRDown := false
 	}
 	if (dPadDown & !dPadDDown){
@@ -410,14 +418,14 @@ setButtonStates() { ;dPadUp, dPadDown, dPadLeft, dPadRight
 		Send {a up}
 		dPadLDown := false
 	}
-	;if (dPadUp & !dPadUDown){
-	;	Send {b down}
-	;	dPadUDown := true
-	;}
-	;if (!dPadUp & dPadUDown) {
-	;	Send {b up}
-	;	dPadUDown := false
-	;}
+	if (dPadUp & !dPadUDown){
+		Send {2 down}
+		dPadUDown := true
+	}
+	if (!dPadUp & dPadUDown) {
+		Send {2 up}
+		dPadUDown := false
+	}
 	;if (rightThumb & !rThumbDown){
 	;	Send {a down}
 	;	MouseClick, left, centerX, centerY, ,0
@@ -427,7 +435,7 @@ setButtonStates() { ;dPadUp, dPadDown, dPadLeft, dPadRight
 	;	Send {a up}
 	;	rThumbDown := false
 	;}
-	if (start & !startDown){ ;game menu
+	if (start & !startDown){ 
 		Send {b down}
 		startDown := true
 	}
@@ -438,86 +446,48 @@ setButtonStates() { ;dPadUp, dPadDown, dPadLeft, dPadRight
 }
 
 crosshair:
-SetWinDelay 0
-Restart:
-Selecting := False
-OldX := -1, OldY := -1
-Locked  := False
-Visible := True      ;<= determine start-up behaviour
+	SetWinDelay 0
 
-; use VirtualScreen here to support multiple monitors
-SysGet, VirtualScreenWidth, 78
-SysGet, VirtualScreenHeight, 79
-ID1 := Box(2,2,30)
-ID2 := Box(3,30,2)
+	; use VirtualScreen here to support multiple monitors
+	SysGet, VirtualScreenWidth, 78
+	SysGet, VirtualScreenHeight, 79
+	horzXHair := Box(2,3,30)
+	vertXHair := Box(3,30,3)
+	;horzXHair2 := Box(4,2,20)
+	;vertXHair2 := Box(5,20,2)
+	; lineDot1 := Box(5, 4, 4)
+	; lineDot2 := Box(6, 4, 4)
+	; lineDot3 := Box(7, 4, 4)
+	; lineDot4 := Box(8, 4, 4)
+	; lineDot5 := Box(9, 4, 4)
+	; lineDot6 := Box(10, 4, 4)
+	; lineDot7 := Box(11, 4, 4)
+	; lineDot8 := Box(12, 4, 4)
 
-;SetTimer Ruler, 10
-if (Visible == False) {
-    WinHide ahk_id %ID1%,, 
-    WinHide ahk_id %ID2%,, 
-}
-Return
+	; === Sbroutines
+	Ruler:
+	   WinMove ahk_id %horzXHair%,, %crosshairPosX%, % crosshairPosY-15    ;create crosshair by moving 1/2 length of segment
+	   WinMove ahk_id %vertXHair%,, % crosshairPosX-15, %crosshairPosY%
+	   ;WinMove ahk_id %horzXHair2%,, % centerX + 0.5*offsetLX, % centerY + 0.5*offsetLY - 10
+	   ;WinMove ahk_id %vertXHair2%,, % centerX + 0.5*offsetLX - 10, % centerY + 0.5*offsetLY
+	   ; WinMove ahk_id %lineDot0%,, % centerX + 0.5*offsetLX, % centerY + 0.5*offsetLY
+	   ; WinMove ahk_id %lineDot1%,, % centerX + 0.2*offsetLX, % centerY + 0.2*offsetLY
+	   ; WinMove ahk_id %lineDot2%,, % centerX + 0.3*offsetLX, % centerY + 0.3*offsetLY
+	   ; WinMove ahk_id %lineDot3%,, % centerX + 0.4*offsetLX, % centerY + 0.4*offsetLY
+	   ; WinMove ahk_id %lineDot4%,, % centerX + 0.5*offsetLX, % centerY + 0.5*offsetLY
+	   ; WinMove ahk_id %lineDot5%,, % centerX + 0.6*offsetLX, % centerY + 0.6*offsetLY
+	   ; WinMove ahk_id %lineDot6%,, % centerX + 0.7*offsetLX, % centerY + 0.7*offsetLY
+	   ; WinMove ahk_id %lineDot7%,, % centerX + 0.8*offsetLX, % centerY + 0.8*offsetLY
+	   ; WinMove ahk_id %lineDot8%,, % centerX + 0.9*offsetLX, % centerY + 0.9*offsetLY
+	Return 
 
-
-; === Toggle lock of crosshairs
-;KeyWait, RButton, D
-^NumpadDot::
-;RButton::             ;using hotkey instead of waiting for a key keeps the right click from calling other behavior during script
-if (Visible == False) {
-    WinShow ahk_id %ID1%,, 
-    WinShow ahk_id %ID2%,, 
-  Visible := True 
-}
-if (Locked == False) {
-  SetTimer Ruler, Off
-  Locked := True 
-  }
-else {
-  SetTimer Ruler, 10
-  Locked := False 
-  }
-Return
-
-
-; === Toggle display of crosshairs
-^Numpad0::
-if (Visible == True) {
-    WinHide ahk_id %ID1%,, 
-    WinHide ahk_id %ID2%,, 
-    Visible := False
-  }
-else {
-    WinShow ahk_id %ID1%,,
-    WinShow ahk_id %ID2%,,
-    Visible := True
-}
-Return
-
-
-; === Terminate program
-Numpad0::Send {Blind}{Numpad0}  ; necessary to make Numpad0 work normally
-Numpad0 & NumpadDot::
-;Escape::
-OutOfHere:
-ExitApp
-
-
-
-
-; === Subroutines
-Ruler:
-   WinMove ahk_id %ID1%,, %crosshairPosX%, % crosshairPosY-15    ;create crosshair by moving 1/2 length of segment
-   WinMove ahk_id %ID2%,, % crosshairPosX-15, %crosshairPosY%
-   ;ToolTip (Ctrl-0 to anchor)
-Return 
-
-Box(n,wide,high)
-{
-   Gui %n%:Color, FF0000,0             ; Red
-   Gui %n%:-Caption +ToolWindow +E0x20 ; No title bar, No taskbar button, Transparent for clicks
-   Gui %n%: Show, Center W%wide% H%high%      ; Show it
-   WinGet ID, ID, A                    ; ...with HWND/handle ID
-   Winset AlwaysOnTop,ON,ahk_id %ID%   ; Keep it always on the top
-   WinSet Transparent,255,ahk_id %ID%  ; Opaque
-   Return ID
-}
+	Box(n,wide,high)
+	{
+	   Gui %n%:Color, FFFFE0,0             ; whitish yellow
+	   Gui %n%:-Caption +ToolWindow +E0x20 ; No title bar, No taskbar button, Transparent for clicks
+	   Gui %n%: Show, Center W%wide% H%high%      ; Show it
+	   WinGet ID, ID, A                    ; ...with HWND/handle ID
+	   Winset AlwaysOnTop,ON,ahk_id %ID%   ; Keep it always on the top
+	   WinSet Transparent,255,ahk_id %ID%  ; Opaque
+	   Return ID
+	}

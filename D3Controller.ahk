@@ -14,6 +14,7 @@ analogMin = -32768 ;min value analog sticks can return
 triggerMax = 255 ;max value trigger can return
 triggerMin = 0 ;min value trigger can return
 moveCircleRadius = 140
+mouseButtonUp := true
 
 #q::stop++ ;flag to kill loop
 
@@ -46,7 +47,7 @@ Loop{
 			thresholdTriggers(leftTriggerAnalog, rightTriggerAnalog)
 				;DebugMessage(rightTrigger)
 				;Sleep, 100
-			;handle ability aiming via left analog stick (since ability buttons on the right)
+			;handle movement via left analog stick (since ability buttons on the right)
 			analogStick2Offsets(thumbLX, thumbLY ;inputs
 								, offsetLX, offsetLY) ;outputs
 				;DebugMessage(offsetLX)
@@ -54,24 +55,46 @@ Loop{
 					;DebugMessage(offsetLX)
 					;DebugMessage(offsetLY)
 				MouseMove, centerX+offsetLX, centerY+offsetLY, 0
-				Sleep, 10
+				if mouseButtonUp {
+					Send {Alt down} ; for tempest rush monk
+					Click down
+					mouseButtonUp := false
+				}
+			} else {
+				if !mouseButtonUp {
+					MouseMove, centerX, centerY, 0
+					Click up
+					Send {Alt up} ; for tempest rush monk
+					mouseButtonUp := true
+				}
 			}
 			;map controller state to key presses
 			setButtonStates() 
-			if((Abs(offsetLX)+Abs(offsetLY)) <= 0) { ;yeah this is a ghetto else - i needed to splice in something mandatory
-				;handle character movement via right analog stick
-				analogStick2Offsets(thumbRX, thumbRY ;inputs
-									, offsetRX, offsetRY) ;outputs
-					;DebugMessage(offsetRX)
-				if((Abs(offsetRX)+Abs(offsetRY)) > 0) { ;only click for significant displacements
-						;DebugMessage(offsetRX)
-						;DebugMessage(offsetRY)
-					;MouseGetPos, posX, posY ;save mouse position
-					MouseClick, left, centerX+offsetRX, centerY+offsetRY, ,0
-					;MouseMove, posX, posY, 0 ;instantly return mouse to previous position - currently feels/looks too weird
-					Sleep, 50
-				}
-			}
+			;;; not using right stick for tempest rush monk
+
+			; if((Abs(offsetLX)+Abs(offsetLY)) <= 0) { ;yeah this is a ghetto else - i needed to splice in something mandatory
+			; 	;handle character movement via right analog stick
+			; 	analogStick2Offsets(thumbRX, thumbRY ;inputs
+			; 						, offsetRX, offsetRY) ;outputs
+			; 		;DebugMessage(offsetRX)
+			; 	if((Abs(offsetRX)+Abs(offsetRY)) > 0) { ;only click for significant displacements
+			; 			;DebugMessage(offsetRX)
+			; 			;DebugMessage(offsetRY)
+			; 		;MouseGetPos, posX, posY ;save mouse position
+			; 		MouseMove, centerX+offsetRX, centerY+offsetRY, 0
+			; 		if mouseButtonUp {
+			; 			Send {Alt down} ; for tempest rush monk
+			; 			Click down
+			; 			mouseButtonUp := false
+			; 		}
+			; 		;MouseMove, posX, posY, 0 ;instantly return mouse to previous position - currently feels/looks too weird
+			; 	} else { ; when release the movement stick, snap back to center and halt movement
+			; 		MouseMove, centerX, centerY, 0
+			; 		Click up
+			; 		Send {Alt up} ; for tempest rush monk
+			; 		mouseButtonUp := true
+			; 	}
+			; }
 		}
 		;maybe add some exception handling if controller is unplugged later
 			;need to figure out how to handle telling system when controller *should* be in
@@ -172,11 +195,11 @@ setButtonStates() { ;dPadUp, dPadDown, dPadLeft, dPadRight
 				;, buttonB, buttonX, buttonY) {
 	global
 	if buttonA { ;skill 1
-		Send {a down}
+		Send {q down}
 ;		Send, a
 	} 
 	else { 
-		Send {a up}
+		Send {q up}
 	}
 	if buttonX { ;skill 2
 		Send {w down}
@@ -193,17 +216,17 @@ setButtonStates() { ;dPadUp, dPadDown, dPadLeft, dPadRight
 		Send {e up}
 	}
 	if buttonB { ;skill 4
-		Send {f down}
+		Send {r down}
 	} 
 	else { 
-		Send {f up}
+		Send {r up}
 	}
 	if rightShoulder { ;skill 5 is left mouse click, which is also used to move
 					   ;use this for shift to force usage of skill rather than moving
-		Send {Shift Down}
+		Send {Alt Down}
 	} 
 	else { 
-		Send {Shift Up}
+		Send {Alt Up}
 	}
 	if rightTrigger { ;skill 6
 		Click right down
@@ -212,19 +235,28 @@ setButtonStates() { ;dPadUp, dPadDown, dPadLeft, dPadRight
 		Click right up
 	}
 	if leftShoulder { ;potion
-		Send, q
+		Send, i
 	} 
 	if dPadRight { ;town portal
-		Send, t
+		Send, f
 		Sleep, 50
 	} 
 	if dPadDown { ;map
 		Send {Tab}
 		Sleep, 50
 	}
-	if back { ;character menu
-		Send, c
-		Sleep, 50
+	if back { ;spam right click in a circle to pick shit up
+		Random, startAngle, 0, 6.28
+		Loop, 12 {
+			angleToOffsets(startAngle, randOffsetX, randOffsetY)
+			MouseClick, left, centerX+randOffsetX, centerY+randOffsetY
+			startAngle += 3.14
+			Sleep, 50
+			angleToOffsets(startAngle, randOffsetX, randOffsetY)
+			MouseClick, left, centerX+randOffsetX, centerY+randOffsetY
+			startAngle += 0.26
+			Sleep, 50
+		}
 	}
 	if start { ;game menu
 		Send {Esc}
@@ -232,28 +264,9 @@ setButtonStates() { ;dPadUp, dPadDown, dPadLeft, dPadRight
 	}
 }
 
-;switch into/out of magic find gear
-MFSwap() {
-	MouseGetPos, xpos, ypos
-	Send, c
-	Sleep, 50
-	MouseClick, right,  1433,  608
-	MouseClick, right,  1436,  614
-	MouseClick, left,  1440,  657
-	MouseClick, left,  1639,  392
-	MouseClick, left,  1497,  596
-	MouseClick, left,  1838,  394
-	MouseClick, right,  1493,  667
-	MouseClick, right,  1521,  652
-	MouseClick, right,  1569,  640
-	MouseClick, right,  1630,  639
-	MouseClick, right,  1672,  639
-	MouseClick, right,  1713,  640
-	MouseClick, right,  1768,  640
-	MouseClick, right,  1825,  640
-	; MouseClick, right,  1873,  659 ;far right
-	; MouseClick, left,  1825,  640 ;offhand swap
-	; MouseClick, left,  1845,  475 ;
-	Send, c
-	MouseMove, xpos, ypos
+angleToOffsets(angle ;inputs
+			   , ByRef offsetX, ByRef offsetY) { ;outputs
+	global moveCircleRadius
+	offsetX := moveCircleRadius*Cos(angle)
+	offsetY := -moveCircleRadius*Sin(angle) ;Y direction is reversed since pixels count downward from top
 }
